@@ -7,6 +7,7 @@ async function bootstrap() {
 
   await Configurator.init(app)
       .addDefaultPipes()
+      .addSwagger()
       .start((port) => {
         console.log(`Сервер запущен на порту: ${port}`);
       });

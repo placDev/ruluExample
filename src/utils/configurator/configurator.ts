@@ -1,4 +1,5 @@
 import {INestApplication, ValidationPipe} from "@nestjs/common";
+import {DocumentBuilder, SwaggerModule} from "@nestjs/swagger";
 
 export default class Configurator {
     static app: INestApplication;
@@ -17,6 +18,19 @@ export default class Configurator {
                 whitelist: true,
             }),
         );
+
+        return this;
+    }
+
+    static addSwagger() {
+        const config = new DocumentBuilder()
+            .setTitle('Рулю practical')
+            .setDescription('Giga Uga Buga')
+            .setVersion('1.0')
+            .build();
+
+        const document = SwaggerModule.createDocument(this.app, config);
+        SwaggerModule.setup('swagger', this.app, document);
 
         return this;
     }
