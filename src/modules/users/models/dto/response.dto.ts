@@ -1,4 +1,4 @@
-export class Response<T> {
+export class Response<T = any> {
     constructor(value: Partial<Response<T>>) {
         this.success = value?.success ?? false;
         this.result = value?.result ?? {} as T;
@@ -14,10 +14,12 @@ export class Response<T> {
         })
     }
 
-    static error<B>(result: B) {
-        return new Response<B>({
+    static error(error: string) {
+        return new Response({
             success: false,
-            result: result
+            result: {
+                error
+            }
         })
     }
 }

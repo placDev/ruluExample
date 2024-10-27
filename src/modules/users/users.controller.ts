@@ -19,11 +19,11 @@ export class UsersController {
     }
 
     @ApiResponse({
-        type: [Number],
+        type: Response<CreateUserResponseDto>,
     })
     @Get('/get/:id')
     getById(@Param('id') userId: number) {
-        return [userId];
+        return Response.error('Не работает');
     }
 
     @ApiResponse({
