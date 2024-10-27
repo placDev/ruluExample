@@ -67,9 +67,14 @@ export class UsersController {
                 })
             }
 
-            return Response.success({
-                users: await this.userService.getByFilter({ fullname, role })
-            })
+            const filtredUsers = await this.userService.getByFilter({ fullname, role });
+            if(filtredUsers?.length) {
+                return Response.success({
+                    users: filtredUsers
+                })
+            }
+
+            return Response.error(`Не удалось получить пользователей по указанным фильтрам`);
         } catch (e) {
             return Response.error(`Не удалось получить пользователей по указанным фильтрам`);
         }
