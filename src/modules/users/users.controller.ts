@@ -4,26 +4,49 @@ import {ApiParam, ApiQuery, ApiResponse, ApiTags} from "@nestjs/swagger";
 import {CreateUserResponseDto} from "./models/dto/create-user-response.dto";
 import {Response} from "./models/dto/response.dto";
 import {UpdateUserDto} from "./models/dto/update-user.dto";
+import {UsersService} from "./users.service";
 
 @ApiTags('users')
 @Controller()
 export class UsersController {
+    constructor(
+        private readonly userService: UsersService
+    ) {}
+
     @ApiResponse({
         type: Response<CreateUserResponseDto>,
     })
     @Post('/create')
     async create(@Body() userResponse: CreateUserDto) {
-        return Response.success<CreateUserResponseDto>({
-            id: userResponse.efficiency
-        })
+        try {
+            const newUserId = await this.userService.create(userResponse);
+
+            return Response.success<CreateUserResponseDto>({
+                id: newUserId
+            })
+        } catch (e) {
+            return Response.error('Не удалось сохранить пользователя')
+        }
     }
 
     @ApiResponse({
         type: Response<CreateUserResponseDto>,
     })
     @Get('/get/:id')
-    getById(@Param('id') userId: number) {
-        return Response.error('Не работает');
+    async getById(@Param('id') userId: number) {
+        try {
+            const user = await this.userService.getById(userId);
+
+            if(!user) {
+                return Response.error(`Пользователь с id ${userId} не найден`)
+            }
+
+            return Response.success({
+                users: [user]
+            })
+        } catch (e) {
+            return Response.error(`Не удалось получить пользователя с id ${userId}`)
+        }
     }
 
     @ApiResponse({
@@ -32,31 +55,50 @@ export class UsersController {
     @ApiQuery({ name: 'full_name', required: false })
     @ApiQuery({ name: 'role', required: false })
     @Get('/get')
-    getByFilter(
+    async getByFilter(
         @Query('full_name') fullname: string,
         @Query('role') role: string
     ) {
-        if(fullname == null && role == null) {
-            return ['Все'];
-        }
+        try {
+            if(fullname == null && role == null) {
+                const allUsers = await this.userService.getAll();
+                return Response.success({
+                    users: allUsers
+                })
+            }
 
-        return ['Фильтрация'];
+            return Response.success({
+                users: await this.userService.getByFilter({ fullname, role })
+            })
+        } catch (e) {
+            return Response.error(`Не удалось получить пользователей по указанным фильтрам`);
+        }
     }
 
     @Patch('/update/:id')
-    updateUser(@Param('id') id: number, @Body() updateUser: UpdateUserDto) {
-        return {
-            id, updateUser
+    async updateUser(@Param('id') id: number, @Body() updateUser: UpdateUserDto) {
+        try {
+            const updatedUser = await this.userService.update(id, updateUser);
+
+            return Response.success(updatedUser);
+        } catch (e) {
+            return Response.error(`Не удалось обновить пользователя`);
         }
     }
 
     @ApiParam({ name: 'id', required: false })
     @Delete('/delete/:id')
-    delete(@Param('id') id: number) {
-        if(!id) {
-            return 'Удаляем всех'
-        }
+    async delete(@Param('id') id: number) {
+        try {
+            if(!id) {
+                await this.userService.deleteAll();
+                return Response.success();
+            }
 
-        return 'Удаляем ' + id;
+            const deletedUser = await this.userService.delete(id);
+            return Response.success(deletedUser);
+        } catch (e) {
+            return Response.error(`Не удалось удалить пользователя`);
+        }
     }
 }

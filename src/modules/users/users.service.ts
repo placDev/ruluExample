@@ -3,11 +3,19 @@ import {InjectDataSource} from "../db/decorators/inject-data-source.decorator";
 import {DataSource} from "typeorm";
 import {User} from "./models/user";
 import {CreateUserDto} from "./models/dto/create-user.dto";
+import {UpdateUserDto} from "./models/dto/update-user.dto";
+
+export type UserFilter = {
+    fullname: string | null,
+    role: string | null
+}
 
 export abstract class UsersService {
-    abstract create(user: User): Promise<number>;
+    abstract create(user: CreateUserDto): Promise<number>;
     abstract getAll(): Promise<Array<User>>;
     abstract getById(id: number): Promise<User>;
+    abstract getByFilter(filter: UserFilter): Promise<Array<User>>;
+    abstract update(id: number, updateData: UpdateUserDto): Promise<User>;
     abstract delete(id: number): Promise<User>;
     abstract deleteAll(): Promise<void>;
 }
@@ -43,6 +51,25 @@ export class UserServiceImpl extends UsersService {
                 id: id
             }
         });
+    }
+
+    async getByFilter(filter: UserFilter): Promise<Array<User>> {
+        const userRepository = this.db.getRepository(User);
+        return await userRepository.findBy({
+            full_name: filter.fullname ?? undefined,
+            role: filter.role ?? undefined,
+        })
+    }
+
+    async update(id: number, updateData: UpdateUserDto): Promise<User> {
+        const userRepository = this.db.getRepository(User);
+
+        await userRepository.update(id, {
+            full_name: updateData.full_name,
+            role: updateData.role
+        });
+
+        return await userRepository.findOne({ where: { id } });
     }
 
     async delete(id: number) {
