@@ -1,4 +1,16 @@
-import {Body, Controller, Delete, Get, Param, Patch, Post, Query} from "@nestjs/common";
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    InternalServerErrorException,
+    NotFoundException,
+    Param,
+    Patch,
+    Post,
+    Query,
+    Res
+} from "@nestjs/common";
 import {CreateUserDto} from "./models/dto/create-user.dto";
 import {ApiParam, ApiQuery, ApiResponse, ApiTags} from "@nestjs/swagger";
 import {CreateUserResponseDto} from "./models/dto/create-user-response.dto";
@@ -25,7 +37,9 @@ export class UsersController {
                 id: newUserId
             })
         } catch (e) {
-            return Response.error('Не удалось сохранить пользователя')
+            throw new InternalServerErrorException(
+                Response.error('Не удалось сохранить пользователя')
+            );
         }
     }
 
@@ -34,19 +48,17 @@ export class UsersController {
     })
     @Get('/get/:id')
     async getById(@Param('id') userId: number) {
-        try {
-            const user = await this.userService.getById(userId);
+        const user = await this.userService.getById(userId);
 
-            if(!user) {
-                return Response.error(`Пользователь с id ${userId} не найден`)
-            }
-
-            return Response.success({
-                users: [user]
-            })
-        } catch (e) {
-            return Response.error(`Не удалось получить пользователя с id ${userId}`)
+        if(!user) {
+            throw new NotFoundException(
+                Response.error(`Пользователь с id ${userId} не найден`)
+            );
         }
+
+        return Response.success({
+            users: [user]
+        })
     }
 
     @ApiResponse({
@@ -59,25 +71,23 @@ export class UsersController {
         @Query('full_name') fullname: string,
         @Query('role') role: string
     ) {
-        try {
-            if(fullname == null && role == null) {
-                const allUsers = await this.userService.getAll();
-                return Response.success({
-                    users: allUsers
-                })
-            }
-
-            const filtredUsers = await this.userService.getByFilter({ fullname, role });
-            if(filtredUsers?.length) {
-                return Response.success({
-                    users: filtredUsers
-                })
-            }
-
-            return Response.error(`Не удалось получить пользователей по указанным фильтрам`);
-        } catch (e) {
-            return Response.error(`Не удалось получить пользователей по указанным фильтрам`);
+        if(fullname == null && role == null) {
+            const allUsers = await this.userService.getAll();
+            return Response.success({
+                users: allUsers
+            })
         }
+
+        const filtredUsers = await this.userService.getByFilter({ fullname, role });
+        if(filtredUsers.length) {
+            return Response.success({
+                users: filtredUsers
+            })
+        }
+
+        throw new NotFoundException(
+            Response.error(`Не удалось получить пользователей по указанным фильтрам`)
+        );
     }
 
     @Patch('/update/:id')
@@ -87,7 +97,9 @@ export class UsersController {
 
             return Response.success(updatedUser);
         } catch (e) {
-            return Response.error(`Не удалось обновить пользователя`);
+            throw new InternalServerErrorException(
+                Response.error(`Не удалось обновить пользователя`)
+            );
         }
     }
 
@@ -103,7 +115,9 @@ export class UsersController {
             const deletedUser = await this.userService.delete(id);
             return Response.success(deletedUser);
         } catch (e) {
-            return Response.error(`Не удалось удалить пользователя`);
+            throw new InternalServerErrorException(
+                Response.error(`Не удалось удалить пользователя`)
+            );
         }
     }
 }

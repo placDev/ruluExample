@@ -78,9 +78,11 @@ export class UserServiceImpl extends UsersService {
             where: { id }
         });
 
-        if (item) {
-            await userRepository.remove(item);
+        if (!item) {
+            throw new Error('Пользователь не найден')
         }
+
+        await userRepository.remove(item);
 
         return item;
     }
