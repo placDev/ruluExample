@@ -66,19 +66,21 @@ export class UsersController {
     })
     @ApiQuery({ name: 'full_name', required: false })
     @ApiQuery({ name: 'role', required: false })
+    @ApiQuery({ name: 'efficiency', required: false })
     @Get('/get')
     async getByFilter(
         @Query('full_name') fullname: string,
-        @Query('role') role: string
+        @Query('role') role: string,
+        @Query('efficiency') efficiency: number
     ) {
-        if(fullname == null && role == null) {
+        if(fullname == null && role == null && isNaN(efficiency)) {
             const allUsers = await this.userService.getAll();
             return Response.success({
                 users: allUsers
             })
         }
 
-        const filtredUsers = await this.userService.getByFilter({ fullname, role });
+        const filtredUsers = await this.userService.getByFilter({ fullname, role, efficiency });
         if(filtredUsers.length) {
             return Response.success({
                 users: filtredUsers
@@ -103,20 +105,27 @@ export class UsersController {
         }
     }
 
-    @ApiParam({ name: 'id', required: false })
+    @ApiParam({ name: 'id', required: true })
     @Delete('/delete/:id')
     async delete(@Param('id') id: number) {
         try {
-            if(!id) {
-                await this.userService.deleteAll();
-                return Response.success();
-            }
-
             const deletedUser = await this.userService.delete(id);
             return Response.success(deletedUser);
         } catch (e) {
             throw new InternalServerErrorException(
                 Response.error(`Не удалось удалить пользователя`)
+            );
+        }
+    }
+
+    @Delete('/delete')
+    async deleteAll() {
+        try {
+            await this.userService.deleteAll();
+            return Response.success();
+        } catch (e) {
+            throw new InternalServerErrorException(
+                Response.error(`Не удалось удалить всех пользователей`)
             );
         }
     }

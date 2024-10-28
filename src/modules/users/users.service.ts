@@ -7,7 +7,8 @@ import {UpdateUserDto} from "./models/dto/update-user.dto";
 
 export type UserFilter = {
     fullname: string | null,
-    role: string | null
+    role: string | null,
+    efficiency: number | null,
 }
 
 export abstract class UsersService {
@@ -58,6 +59,7 @@ export class UserServiceImpl extends UsersService {
         return await userRepository.findBy({
             full_name: filter.fullname ?? undefined,
             role: filter.role ?? undefined,
+            efficiency: isNaN(filter.efficiency) ? undefined : filter.efficiency,
         })
     }
 
@@ -84,7 +86,7 @@ export class UserServiceImpl extends UsersService {
 
         await userRepository.remove(item);
 
-        return item;
+        return { ...item, id };
     }
 
     async deleteAll() {
